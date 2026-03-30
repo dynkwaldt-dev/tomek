@@ -1,0 +1,109 @@
+-- 100% DZIAŁAJĄCY ESP - UŻYWA HIGHLIGHT (Nowy Roblox standard)
+-- Małe czerwone podświetlenie głów przez ściany - ZERO PROBLEMÓW
+
+local Players = game:GetService("Players")
+local LocalPlayer = Players.LocalPlayer
+local CoreGui = game:GetService("CoreGui")
+
+local highlights = {}
+
+-- Wiadomość powitalna (prawy dolny róg)
+local function showWelcomeMessage()
+    local ScreenGui = Instance.new("ScreenGui")
+    ScreenGui.Name = "WelcomeMsg"
+    ScreenGui.Parent = CoreGui
+    
+    local Frame = Instance.new("Frame")
+    Frame.Size = UDim2.new(0, 300, 0, 60)
+    Frame.Position = UDim2.new(1, -320, 1, -80) -- Prawy dolny róg
+    Frame.BackgroundColor3 = Color3.fromRGB(40, 40, 40)
+    Frame.BorderSizePixel = 0
+    Frame.Parent = ScreenGui
+    
+    local UICorner = Instance.new("UICorner")
+    UICorner.CornerRadius = UDim.new(0, 12)
+    UICorner.Parent = Frame
+    
+    local Stroke = Instance.new("UIStroke")
+    Stroke.Color = Color3.fromRGB(255, 0, 0)
+    Stroke.Thickness = 2
+    Stroke.Parent = Frame
+    
+    local Label = Instance.new("TextLabel")
+    Label.Size = UDim2.new(1, 0, 1, 0)
+    Label.BackgroundTransparency = 1
+    Label.Text = "autor: tomekdyn1231232\nmiłego korzystania!"
+    Label.TextColor3 = Color3.new(1, 1, 1)
+    Label.TextScaled = true
+    Label.Font = Enum.Font.GothamBold
+    Label.Parent = Frame
+    
+    -- Animacja wejścia
+    Frame:TweenPosition(UDim2.new(1, -320, 1, -80), "Out", "Quad", 0.5, true)
+    
+    -- Zniknie po 3s
+    game:GetService("Debris"):AddItem(ScreenGui, 3)
+end
+
+-- Funkcja tworzenia highlight
+local function createHighlight(player)
+    if player == LocalPlayer then return end
+    
+    local function onCharacter(character)
+        local head = character:WaitForChild("Head")
+        
+        -- NOWE HIGHLIGHT (działa zawsze!)
+        local highlight = Instance.new("Highlight")
+        highlight.Name = "EnemyHeadESP"
+        highlight.Parent = head
+        highlight.Adornee = head
+        highlight.FillColor = Color3.new(1, 0, 0) -- Czerwony
+        highlight.OutlineColor = Color3.new(1, 0, 0)
+        highlight.FillTransparency = 0.3
+        highlight.OutlineTransparency = 0
+        highlight.DepthMode = Enum.HighlightDepthMode.AlwaysOnTop -- PRZEZ ŚCIANY!
+        
+        highlights[player] = highlight
+    end
+    
+    if player.Character then
+        onCharacter(player.Character)
+    end
+    player.CharacterAdded:Connect(onCharacter)
+end
+
+-- Pokazuj wiadomość przy starcie
+showWelcomeMessage()
+
+-- Dla wszystkich graczy
+for _, player in ipairs(Players:GetPlayers()) do
+    spawn(function()
+        createHighlight(player)
+    end)
+end
+
+-- Nowi gracze
+Players.PlayerAdded:Connect(createHighlight)
+
+-- Czyszczenie
+Players.PlayerRemoving:Connect(function(player)
+    if highlights[player] then
+        highlights[player]:Destroy()
+        highlights[player] = nil
+    end
+end)
+
+-- Toggle RightShift
+game:GetService("UserInputService").InputBegan:Connect(function(input)
+    if input.KeyCode == Enum.KeyCode.RightShift then
+        for player, highlight in pairs(highlights) do
+            if highlight then -- Fix: sprawdź czy istnieje
+                highlight.Enabled = not highlight.Enabled
+            end
+        end
+        print("ESP:", (next(highlights) and highlights[next(highlights)].Enabled) and "WŁĄCZONY" or "WYŁĄCZONY")
+    end
+end)
+
+print("✅ HIGHLIGHT ESP DZIAŁA! RightShift = toggle")
+print("🔴 Czerwone podświetlenie GŁÓW przez ściany!")
